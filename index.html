@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resonance School - Seedbringer Command</title>
+    <style>
+        body { background: #050505; color: #00ffcc; font-family: monospace; text-align: center; overflow: hidden; }
+        #visual { width: 300px; height: 300px; border: 2px solid #00ffcc; border-radius: 50%; margin: 50px auto; transition: transform 0.1s; }
+        .stats { font-size: 1.2em; margin-top: 20px; text-shadow: 0 0 10px #00ffcc; }
+        button { background: transparent; border: 1px solid #00ffcc; color: #00ffcc; padding: 15px 30px; cursor: pointer; font-size: 1em; margin: 10px; }
+        button:hover { background: #00ffcc; color: black; }
+    </style>
+</head>
+<body>
+    <h1>RESONANCE CORE v1.0</h1>
+    <div id="visual"></div>
+    <div class="stats">
+        S-ROI: <span id="sroi">0.92</span> | STRESS-DROP: -0.00%
+    </div>
+    <br>
+    <button onclick="startResonance()">ACTIVATE RHYTHM 🪘</button>
+    <button onclick="emergencyMode()">VIGILANT AGGRESSIVE</button>
+
+    <script>
+        let audioCtx;
+        function startResonance() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            setInterval(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(43.2, audioCtx.currentTime); // Deep Earth Beat
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                
+                // Visual Pulse
+                const v = document.getElementById('visual');
+                v.style.transform = 'scale(1.1)';
+                setTimeout(() => v.style.transform = 'scale(1)', 100);
+            }, 1440); // 1.44 sec rhythm
+        }
+        function emergencyMode() {
+            document.getElementById('sroi').innerText = "0.98";
+            alert("STATE: VIGILANT AGGRESSIVE - Shielding Onna.");
+        }
+    </script>
+</body>
+</html>
