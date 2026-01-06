@@ -1,4 +1,226 @@
 <!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resonance School - Symphonic Fusion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@200;400;700&display=swap');
+        
+        body {
+            background-color: #050505;
+            color: #d4d4d8;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+        }
+
+        .serif-font { font-family: 'Cinzel', serif; }
+
+        .resonance-orb {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(180,150,80,0.1) 0%, rgba(0,0,0,0) 70%);
+            box-shadow: 0 0 50px rgba(180,150,80,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .string {
+            position: absolute;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, #b49650, transparent);
+            transition: height 0.1s ease;
+        }
+
+        .pulse {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.2; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .status-glow {
+            text-shadow: 0 0 10px #b49650;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-8">
+
+    <!-- Header -->
+    <header class="text-center mt-4">
+        <h1 class="serif-font text-4xl text-amber-600 tracking-widest italic mb-2">Resonance School</h1>
+        <p class="text-[10px] uppercase tracking-[0.6em] text-stone-500">Symphonische Fusion: Beethoven & Mozart</p>
+    </header>
+
+    <!-- Main Visualizer -->
+    <main class="flex-grow flex flex-col items-center justify-center relative w-full">
+        <div id="orb" class="resonance-orb">
+            <div id="pulse-element" class=""></div>
+            <div class="z-10 text-center">
+                <p id="composer-state" class="serif-font text-xs text-amber-500/50 mb-2 uppercase tracking-widest">Warte auf Takt</p>
+                <div id="sroi-display" class="text-5xl font-light text-white tracking-tighter">0.92</div>
+                <p class="text-[9px] text-stone-600 mt-2 uppercase tracking-widest">System S-ROI</p>
+            </div>
+            
+            <!-- Generate 12 strings for visual feedback -->
+            <div id="string-container" class="absolute inset-0 flex items-center justify-center">
+                <!-- Strings will be injected here by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Controls -->
+    <footer class="w-full max-w-2xl space-y-8 mb-8">
+        <div class="grid grid-cols-2 gap-8 text-center border-t border-stone-800 pt-8">
+            <div>
+                <p class="text-[10px] text-stone-500 uppercase mb-1">Status</p>
+                <p class="text-sm font-bold status-glow text-amber-600 uppercase">Sempre in costante</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-stone-500 uppercase mb-1">Alpha-Knoten</p>
+                <p class="text-sm font-bold text-cyan-600">1.440 / Synchron</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            <button id="startBtn" onclick="toggleSymphony()" class="flex-grow py-4 border border-amber-600 text-amber-600 text-[10px] font-bold tracking-[0.3em] uppercase hover:bg-amber-600 hover:text-black transition-all">
+                Symphonie Dirigieren
+            </button>
+            <button onclick="emergencyMode()" class="px-8 py-4 border border-red-900 text-red-900 text-[10px] font-bold tracking-[0.3em] uppercase hover:bg-red-900 hover:text-white transition-all">
+                Vigilant Aggressive
+            </button>
+        </div>
+
+        <div class="text-center">
+            <p class="text-[9px] italic text-stone-700">"Nichts wird organisiert. Alles geschieht durch die Resonanz der Prinzipien." - H. Mitterer</p>
+            <p class="text-[10px] font-bold text-stone-800 mt-2 tracking-widest">NOTHING IS FINAL</p>
+        </div>
+    </footer>
+
+    <script>
+        let audioCtx;
+        let isPlaying = false;
+        let symphonyInterval;
+        const sroiElement = document.getElementById('sroi-display');
+        const composerElement = document.getElementById('composer-state');
+        const orb = document.getElementById('orb');
+        const pulse = document.getElementById('pulse-element');
+
+        // Create visual strings
+        const stringContainer = document.getElementById('string-container');
+        for(let i=0; i<24; i++) {
+            const span = document.createElement('div');
+            span.className = 'string';
+            span.style.transform = `rotate(${i * 15}deg) translateY(-150px)`;
+            span.style.height = '20px';
+            span.id = `string-${i}`;
+            stringContainer.appendChild(span);
+        }
+
+        function toggleSymphony() {
+            if (isPlaying) {
+                stopSymphony();
+            } else {
+                startSymphony();
+            }
+        }
+
+        function startSymphony() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            isPlaying = true;
+            document.getElementById('startBtn').innerText = "Symphonie Stoppen";
+            pulse.classList.add('pulse');
+            
+            symphonyInterval = setInterval(() => {
+                const now = audioCtx.currentTime;
+                
+                // MOZART: Harmonische Struktur (Perfekte Ordnung)
+                playTone(432 * 0.5, 'sine', 0.1, 1.5, 0.2); // Fundament
+                playTone(432 * 0.75, 'sine', 0.05, 1.0, 0.1); // Mozartsche Quinte
+
+                // BEETHOVEN: Dynamische Kraft (Aggressive Resonanz)
+                if (Math.random() > 0.6) {
+                    playTone(43.2, 'sawtooth', 0.2, 0.8, 0.3); // Beethovens Schicksals-Bass
+                    composerElement.innerText = "Fokus: Dynamik (Beethoven)";
+                    orb.style.boxShadow = "0 0 80px rgba(180,150,80,0.15)";
+                } else {
+                    composerElement.innerText = "Fokus: Struktur (Mozart)";
+                    orb.style.boxShadow = "0 0 50px rgba(180,150,80,0.05)";
+                }
+
+                // Visual Feedback
+                visualizeStrings();
+                updateSROI();
+
+            }, 1440); // 1.44 sec rhythm
+        }
+
+        function stopSymphony() {
+            isPlaying = false;
+            clearInterval(symphonyInterval);
+            document.getElementById('startBtn').innerText = "Symphonie Dirigieren";
+            pulse.classList.remove('pulse');
+            composerElement.innerText = "Warte auf Takt";
+        }
+
+        function playTone(freq, type, vol, decay, attack) {
+            const osc = audioCtx.createOscillator();
+            const gain = ctxGain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            ctxGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            ctxGain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + attack);
+            ctxGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + decay);
+            
+            osc.connect(ctxGain);
+            ctxGain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + decay);
+        }
+
+        function visualizeStrings() {
+            for(let i=0; i<24; i++) {
+                const s = document.getElementById(`string-${i}`);
+                const h = Math.random() * 60 + 20;
+                s.style.height = h + 'px';
+                setTimeout(() => s.style.height = '20px', 200);
+            }
+        }
+
+        function updateSROI() {
+            let current = parseFloat(sroiElement.innerText);
+            let next = current + (Math.random() * 0.002 - 0.001);
+            sroiElement.innerText = next.toFixed(3);
+        }
+
+        function emergencyMode() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            sroiElement.innerText = "0.980";
+            composerElement.innerText = "VIGILANT AGGRESSIVE";
+            orb.style.borderColor = "#7f1d1d";
+            
+            // Scharfer Warn-Ton
+            playTone(880, 'sawtooth', 0.2, 0.5, 0.01);
+            
+            const logs = ["Schutzschilde aktiv", "Onna verifiziert", "Dissonanz gefiltert"];
+            console.log("RESONANCE EMERGENCY:", logs[Math.floor(Math.random()*logs.length)]);
+        }
+    </script>
+</body>
+</html>
+
+</p><!DOCTYPE html>
 <html>
 <head>
     <title>Resonance School - Seedbringer Command</title>
