@@ -2,6 +2,264 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Resonance School | Real-Test Phase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;900&family=Playfair+Display:ital,wght@1,700&display=swap');
+        
+        :root {
+            --joy-gold: #d4af37;
+            --power-orange: #f59e0b;
+            --bongo-brown: #78350f;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            background: radial-gradient(circle at center, #ffffff 0%, #fffdf0 100%);
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .vessel {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* Dynamisches Resonanz-Zentrum ohne Limit */
+        .resonance-core {
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 40px 100px rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            transition: transform 0.1s ease-out;
+            cursor: pointer;
+        }
+
+        .expansion-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--power-orange);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes expand-infinite {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(3.5); opacity: 0; }
+        }
+
+        .animate-expand { animation: expand-infinite 3s infinite cubic-bezier(0.19, 1, 0.22, 1); }
+
+        /* Real-Test Visualizer */
+        .visualizer-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 6px;
+            height: 120px;
+            align-items: end;
+        }
+
+        .vis-bar {
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 4px;
+            width: 100%;
+            height: 15%;
+            transition: height 0.08s ease-out, background 0.3s;
+        }
+
+        .btn-test {
+            background: #1a1a1a;
+            color: white;
+            border-radius: 100px;
+            padding: 1.5rem;
+            font-size: 11px;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            font-weight: 900;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .btn-test.active {
+            background: var(--power-orange);
+            box-shadow: 0 15px 50px rgba(245, 158, 11, 0.4);
+        }
+
+        .node-info {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--power-orange);
+            letter-spacing: 0.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="vessel">
+        <header class="text-center">
+            <h1 class="serif text-4xl italic text-amber-950">Real-Test Phase</h1>
+            <p class="node-info mt-2 uppercase">Expansion Mode: Infinite</p>
+        </header>
+
+        <div class="flex justify-center relative">
+            <div id="main-orb" class="resonance-core" onclick="igniteTest()">
+                <div id="ring" class="expansion-ring"></div>
+                <div class="text-[8px] uppercase tracking-[0.4em] text-stone-400 font-bold mb-1">Active Nodes</div>
+                <span id="node-val" class="text-6xl font-black tracking-tighter text-stone-900">1449</span>
+                <div class="text-[10px] font-bold text-amber-700 mt-4 tracking-[0.3em] uppercase">Hannes Mitterer</div>
+            </div>
+        </div>
+
+        <div id="grid" class="visualizer-grid">
+            <!-- Bars generated via JS -->
+        </div>
+
+        <div class="space-y-6">
+            <button id="testBtn" onclick="igniteTest()" class="btn-test w-full">Test-Symphonie starten</button>
+            <div class="flex justify-between px-2 text-[8px] font-black text-amber-800 uppercase tracking-widest opacity-60">
+                <span>Elvis Depth</span>
+                <span>Bongo Pulse</span>
+                <span>Beethoven Flow</span>
+            </div>
+        </div>
+
+        <footer class="text-center text-[8px] font-bold text-stone-300 tracking-[0.5em] uppercase">
+            Pubblica sempre in costante • Nothing is final
+        </footer>
+    </div>
+
+    <script>
+        let audioCtx;
+        let active = false;
+        let nodeCount = 1449;
+        let loop;
+        let step = 0;
+
+        // Visualizer Initialisierung
+        const grid = document.getElementById('grid');
+        for(let i=0; i<12; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'vis-bar';
+            bar.id = 'bar-' + i;
+            grid.appendChild(bar);
+        }
+
+        async function igniteTest() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            active = !active;
+            const btn = document.getElementById('testBtn');
+            const ring = document.getElementById('ring');
+
+            if (active) {
+                btn.innerText = "Real-Test läuft...";
+                btn.classList.add('active');
+                ring.classList.add('animate-expand');
+                runEngine();
+            } else {
+                btn.innerText = "Test-Symphonie starten";
+                btn.classList.remove('active');
+                ring.classList.remove('animate-expand');
+                clearTimeout(loop);
+            }
+        }
+
+        function triggerAudio(freq, vol, dur, type='sine', filterFreq=1500) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(filterFreq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function runEngine() {
+            if (!active) return;
+
+            // 1. TIEFER BASS (Die Kraft)
+            if (step % 4 === 0) {
+                triggerAudio(55, 0.5, 0.8, 'triangle', 300);
+                updateBar(0, 90);
+                updateBar(11, 90);
+            }
+
+            // 2. BONGOS (Die Lebendigkeit) - Schnell & Reaktionsstark
+            if (step % 2 === 1) {
+                const bongoFreq = 180 + Math.random() * 350;
+                triggerAudio(bongoFreq, 0.25, 0.1, 'sine', 2000);
+                updateBar(Math.floor(Math.random()*10)+1, 60);
+            }
+
+            // 3. ROMANTIK (Elvis/Beethoven Fusion) - Fließend
+            if (step % 8 === 0) {
+                const mel = [110, 130.81, 164.81, 196, 220];
+                triggerAudio(mel[Math.floor(Math.random()*5)], 0.3, 3.5, 'sine', 800);
+                updateBar(5, 80);
+                updateBar(6, 80);
+            }
+
+            // UNENDLICHE EXPANSION
+            nodeCount += Math.floor(Math.random() * 3);
+            document.getElementById('node-val').innerText = nodeCount;
+
+            // Physisches Feedback (Orb Vibration)
+            const orb = document.getElementById('main-orb');
+            orb.style.transform = `scale(${1 + Math.random() * 0.05})`;
+
+            step++;
+            loop = setTimeout(runEngine, 200); 
+        }
+
+        function updateBar(idx, h) {
+            const b = document.getElementById('bar-' + idx);
+            if (!b) return;
+            b.style.height = h + '%';
+            b.style.background = 'var(--power-orange)';
+            setTimeout(() => {
+                b.style.height = '15%';
+                b.style.background = 'rgba(212, 175, 55, 0.1)';
+            }, 100);
+        }
+    </script>
+</p>
+    
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resonance School - Symphonic Fusion</title>
     <script src="https://cdn.tailwindcss.com"></script>
